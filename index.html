@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>LCC issues map</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<!-- 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+ -->
+<script src='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.js'></script>
+<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.css' rel='stylesheet' />
+<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
+<script src="scripts/leaflet-messagebox.js"></script>
+<script src="scripts/leaflet.groupedlayercontrol.js"></script>
+<script src="scripts/utilities.js"></script>
+<script src="config.js"></script>
+<link href='css/leaflet-messagebox.css' rel='stylesheet' />
+<link href='css/leaflet.groupedlayercontrol.min.css' rel='stylesheet' />
+<link href="css/style-overrides.css" rel='stylesheet' />
+
+<style>
+  body { margin:0; padding:0;}
+  #map { position:absolute; top:0; bottom:0; width:100%;overflow:hidden}
+</style>
+</head>
+
+<body onload="main()">
+<div id='map'></div>
+<script>
+/* 	Cyclescape Issue Map Application
+	Version 0.4.1, 29 Feb 2016
+	Author: George Coulouris (with an acknowledgement to Alex Ingram for the prototype) 
+	Permission to use: MIT licence (http://choosealicense.com/licenses/mit)
+*/
+
+/* Constants */
+deadlineWidth = 12;
+noDeadlineWidth = 5;
+rolloverWidth = 20;
+lineOpacity = 0.5;
+rolloverOpacity = 1;
+dashArray = '1, 20';
+thickDashArray = '15, 5';
+thinDashArray = '10, 5';
+areaFill = 0.15;
+areaFillColor = 'gray';
+circleMarkerRadius = 10;
+
+cyclescapeApiUrl = "http://www.cyclescape.org/api/issues/"
+
+L.mapbox.accessToken = 'pk.eyJ1IjoibnV0dHl4YW5kZXIiLCJhIjoiOGJXbjNMWSJ9.ckqRbehjO-rU86vPSGzMpQ';
+
+/*
+	Needed for access to the mapbox tile server only ?
+L.mapbox.accessToken = null; 	// the code seems to work without the token even though
+								// it uses a couple of mapbox-specific functions
+								// but the token is needed to use the api.tiles.mapbox.com server
+*/
+
+function getUrlConfig() {
+	var title, center, configCenter = [], specialTag, 
+		zoom, bbox, info, staleMargin, expiredMargin, showExpired, showStale,
+		categoryString, categories, overlaySpecs = [], auxOverlaySpecs = [];
+	if(title = urlParam('title')) config.mapTitle = title;
+	if(center = urlParam('center')) {
+		c = center.split(',');
+		configCenter[0] = parseFloat(c[0]);	// convert string to float
+		configCenter[1] = parseFloat(c[1]);	// convert string to float
+		config.mapCenter = configCenter
+	}
+	if(zoom = urlParam('zoom')) config.mapZoom = zoom;
+	if(bbox = urlParam('bbox')) config.bbox = bbox;
+	if(info = urlParam('info')) config.info = info;
+	if(staleMargin = urlParam('stalemargin')) config.staleMargin = staleMargin;
+	if(expiredMargin = urlParam('expiredmargin')) config.expiredMargin = expiredMargin;
+	if(showExpired = urlParam('showexpired')) config.showExpired = (showExpired == "true") ? true : false;
+	if(showStale = urlParam('showstale')) config.showStale = (showStale == "true") ? true : false;
+	
+	function getSpecialTag (specialTag) {
+		var tag, name, otherName;
+		var specialTagFields = specialTag.split(':');
+		name = specialTagFields[1].split('*');
+		otherName = specialTagFields[2].split('*');
+		return { 
+			'tag': '"' + specialTagFields[0] + '"', 
+			'name': name[0], 
+			'otherName': otherName[0], 
+			'specialOnOff': (name.length>1)?'on':'off',
+			'otherOnOff':  (otherName.length>1)?'on':'off'
+		};
+	}
+	
+	if(specialTag1 = urlParam('specialtag1')) 
+		config.firstMenu.specialTag = (specialTag1 == "none") ? null : getSpecialTag (specialTag1); 
+	if(specialTag2 = urlParam('specialtag2')) 
+		config.secondMenu.specialTag = (specialTag2 == "none") ? null : getSpecialTag (specialTag2); 
+	
+	if(categoryString = urlParam('categories')) {
+		categories = categoryString.split('/');	
+		if(categories.length > 0) {
+			for(var i in categories) {
+				overlaySpecs.push(processTags(categories[i]));
+			}
+		}
+		config.firstMenu.selectors = overlaySpecs
+	}
+	
+	if(categoryString = urlParam('secondmenu')) {
+		if(categoryString == 'none') {
+			config.secondMenu = null;
+		} else {
+			var parts = categoryString.split(':');
+			if(parts.length > 1) {
+				config.secondMenu.name = parts[0];
+				categoryString = parts[1];
+			}
+			categories = categoryString.split('/');	
+			if(categories.length > 0) {
+				for(var i in categories) {
+					auxOverlaySpecs.push(processTags(categories[i]));
+				}
+			}
+			config.secondMenu.selectors = auxOverlaySpecs;
+		}
+	}
+}
+
+/* base map layers */
+var mapboxAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+		'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+		'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+	osmAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+	cyclescapeAttribution = 'Issue data:<a href="http://blog.cyclescape.org/about/"> Cyclescape </a> | ',
+	cartoDbAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, Map tiles by CartoDB, under CC BY 3.0',
+		
+	mapboxUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken,
+	mapQuestUrl = 'http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
+	cartoDbLightUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+	OSMUrl = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+	cycleMapUrl = 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png';
+	mapnikBwUrl ='http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png';
+	// following URL found at http://korona.geog.uni-heidelberg.de/contact.html
+	// adminBoundariesUrl = 'http://129.206.66.245:8007/tms_b.ashx?x={x}&y={y}&z={z}'; 
+	adminBoundariesUrl = 'http://korona.geog.uni-heidelberg.de/tiles/adminb/x={x}&y={y}&z={z}'; 
+
+var streets = L.tileLayer(mapboxUrl, {id: 'mapbox.streets', 
+		attribution: L.Browser.mobile ? '' : cyclescapeAttribution + mapboxAttribution});
+var cartoDbLight = L.tileLayer(cartoDbLightUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + cartoDbAttribution});
+var mapQuest = L.tileLayer(mapQuestUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution});
+var openStreetMap = L.tileLayer(OSMUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity:0.7});
+var opencyclemap = L.tileLayer(cycleMapUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity:0.7});
+var mapnik_BlackAndWhite = L.tileLayer(mapnikBwUrl, 
+		{maxZoom: 18, attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity: 0.8});
+var adminBoundaries = L.tileLayer(adminBoundariesUrl);
+
+var thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className: "custom-popup"};
+
+var UIOptions = {showStale: true, showExpired: true};
+
+var baseLayers = {
+	"OSM": openStreetMap,
+	"Greyscale" : mapnik_BlackAndWhite,
+	"MapBox": streets,
+	"OpenCycleMap": opencyclemap
+};
+
+var baseOverlays = {
+	"Borough Boundaries" : adminBoundaries
+};
+
+var map, titleBoxControl, legendBoxControl, layerControl, auxLayerControl, mapControl, theOverlays = [];
+var ajaxCount = 0, initialOverlays = [];
+
+function initialiseMap() {
+	map = L.map('map', {
+	// map options
+		center: config.mapCenter,
+		zoom: config.mapZoom,
+		layers: [streets],
+	// UI options
+		doubleClickZoom: false, // so rapid clicks on tickboxes don't zoom the map!
+	});
+	
+	
+	map.addLayer(adminBoundaries);
+	titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
+	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	layerControl = L.control.groupedLayers(null, null, 
+		{collapsed: L.Browser.mobile, position: 'topright', groupCheckboxes: false, 
+			title: config.firstMenu.name}).addTo(map);
+	
+	if(config.secondMenu) {
+		auxLayerControl = L.control.groupedLayers(null, null, 
+		{collapsed: true, position: 'topright', groupCheckboxes: true, title: config.secondMenu.name}).addTo(map);	
+	}
+	mapControl = L.control.layers(baseLayers, baseOverlays, {collapsed: true, position: 'bottomright'}).addTo(map);	
+}
+
+/* To invoke when a feature is represented by a single point */
+function circleMarker(feature, latlng) {
+	return new L.CircleMarker(latlng, {radius: circleMarkerRadius});
+}
+
+/* To invoke when a feature is represented by a single point */
+function iconMarker(feature, latlng) {
+	return new L.Marker(latlng, {});
+}
+
+/* Mouse Event handlers */
+function featureHighlight(event) {
+	event.target.setStyle({opacity:rolloverOpacity});
+}
+
+function featureLowlight(event) {
+	event.target.setStyle(event.target.feature.issueStyle);
+}
+
+function defineStyle (aLayer) {
+/*
+	Style depends on several parameters of features:
+	 - thick solid line for issues with unexpired deadlines
+	 - dashed thick line for issues with expired deadlines more than deadLineMargin days ago
+	- narrower solid line for issues without deadlines but with activity in the last staleMargin days
+	- narrower dashed line and no fill for issues with activity in the last staleMargin days
+*/
+var style = {fill: false, fillOpacity: areaFill, fillColor: areaFillColor, 
+				weight: noDeadlineWidth, opacity: lineOpacity, lineCap: 'butt'};
+
+	if(aLayer.feature.geometry.type == 'Polygon')  style.fill = true;
+
+	if(deadline = aLayer.feature.properties.deadline) {
+		style.weight = deadlineWidth;
+		if(datePassed(config.expiredMargin, deadline)) {
+			style.dashArray = thickDashArray;
+		}
+	} 
+	if(latestActivity = aLayer.feature.properties.latest_activity_at) {
+		if(datePassed(config.staleMargin, latestActivity) || latestActivity==0) {
+			style.dashArray = thinDashArray;
+		}
+	}
+	return style;
+}
+
+/* called after each Cyclescape Issue is loaded */
+function fixUp(event) {
+	var theOverlay = event.target;
+	var overlayGeojson = theOverlay.getGeoJSON();
+		
+	for (i in overlayGeojson.features) {
+		var description, descriptionPrefix ='<table width=100%><tr>', descriptionPostfix = '', photo, deadline, external_url;
+
+		if ( photo = overlayGeojson.features[i].properties.photo_thumb_url)  //assignment
+			descriptionPrefix += 
+				"<td><div class='thumbnail'><p align = 'left'><img width = 150 src = 'http://cyclescape.org/" + photo + "'</div></td>";
+
+		cyclescapeLink =
+			"<br/><div><a target= '_blank' href='" + overlayGeojson.features[i].properties.cyclescape_url + "'>" +
+			"<b>View discussions on Cyclescape</b></a></div>";
+
+		descriptionPrefix += '<td><div align = "right">' + cyclescapeLink;
+		
+		description = "<div font-size = small>" + overlayGeojson.features[i].properties.description + '</div>';
+		if(external_url = overlayGeojson.features[i].properties.external_url) {
+			descriptionPrefix += 
+				"<a class='external' target='_blank' href='" + external_url + 
+				"'><b>View consultation details</b></a><br/>";
+		}
+
+		if(deadline = overlayGeojson.features[i].properties.deadline)
+			descriptionPrefix += '<b>Deadline: ' + customDateString(deadline) + '</b><br/>';
+			
+		descriptionPrefix +=  '</div></td></tr></table>';
+		
+		if(creationDate = overlayGeojson.features[i].properties.created_at)
+			descriptionPostfix += '</b><i><b>Issue created:</b> ' + customDateString(creationDate);
+		
+		if(author = overlayGeojson.features[i].properties.created_by)
+			descriptionPostfix += '<b> by:</b> ' + author;
+
+		if(latestActivity = overlayGeojson.features[i].properties.latest_activity_at)
+			descriptionPostfix += '<br/><b>Latest post:</b> ' + customDateString(latestActivity);
+
+		descriptionPostfix += '<br/><b>Tags:</b> '
+		var tags = overlayGeojson.features[i].properties.tags;
+		descriptionPostfix += tags[0];
+		for(j = 1; j < tags.length; j++) {
+			descriptionPostfix += ', ' + tags[j];
+		}
+		descriptionPostfix += '</i>';
+		
+		overlayGeojson.features[i].properties.description = 
+			descriptionPrefix + description + descriptionPostfix;
+	}
+	theOverlay.setGeoJSON(overlayGeojson);
+	theOverlay.setFilter(layerFilter);
+
+	// add the rollover labels to the features
+	theOverlay.eachLayer(function (layer) {
+		var labelContent = layer.feature.properties.title, deadline, latestActivity;
+			if(deadline = layer.feature.properties.deadline) 
+				labelContent += '<br/><i><b>Deadline: ' + customDateString(deadline) + '</b></i>';
+			if(latestActivity = layer.feature.properties.latest_activity_at) 
+				labelContent += '<br/><i>Latest post: ' + customDateString(latestActivity) + '</i>';
+			layer.feature.labelContent = labelContent;
+			layer.bindLabel(layer.feature.labelContent);
+			
+			var style = defineStyle(layer);			
+			layer.setStyle(style);
+			layer.feature.issueStyle = style;
+			layer.on('mouseover', featureHighlight);
+			layer.on('mouseout', featureLowlight);
+		}
+	);
+	ajaxCount -= 1;
+	if(ajaxCount == 0) allLayersReady();
+}
+
+function setUpOverlays(layerControl, menuSpec, options) {
+	var baseURL = cyclescapeApiUrl + '?order=size' + '&bbox=' + config.bbox;
+	
+    L.Util.setOptions(this, options);
+    
+	for (var i in menuSpec.selectors) {
+		var spec = menuSpec.selectors[i];
+		var anOverlay;
+		var color = (this.options.coloursReversed) ? 
+					colourTable[Math.abs(colourTable.length - i) % colourTable.length]  : 
+					colourTable[i % colourTable.length]; // % is modulo division
+		var returnedTags;
+		var aName = '<span class="leaflet-control-layer-menu-item" style= "color:' + color + '">' + spec.menuItem + '</span>';
+		var options = {	popupOptions: thePopupOptions, 
+						style: {color: color},
+						pointToLayer: circleMarker
+					};
+					
+		function setUp(specialTag, tags, excludedTags, initiallyOn, sectionName) {
+			var url = baseURL;
+			if(specialTag) 
+				url += '&tags=[' + specialTag + (tags ? ',' + tags : '') +']';
+			else
+				url += tags ? '&tags=[' + tags +']' : '';			
+			if(excludedTags) url += '&excluding_tags=[' + excludedTags + ']';
+			overlay = L.mapbox.featureLayer(null, options).loadURL(url);
+			ajaxCount += 1;
+			layerControl.addOverlay(overlay, aName, sectionName);
+			if(initiallyOn) initialOverlays.push(overlay);
+			overlay.on('ready', fixUp);
+			overlay.on('error', ajaxFailure);
+			theOverlays.push(overlay);
+		}
+
+		document.getElementById('map').style.cursor = 'wait';
+ 		
+		if(menuSpec.specialTag) {	
+			setUp(menuSpec.specialTag.tag, spec.tags, null, 
+					(menuSpec.specialTag.specialOnOff=="on" && spec.onOff=="on"), menuSpec.specialTag.name);
+			setUp(null, spec.tags, menuSpec.specialTag.tag, 
+					(menuSpec.specialTag.otherOnOff=="on" && spec.onOff=="on"), menuSpec.specialTag.otherName); // excluding the special tag
+		} else {
+			setUp(null, spec.tags, null, spec.onOff=="on", null);
+		}
+	}
+}
+
+function ajaxFailure(event) {
+	alert('Failed to establish connection to Cyclescape server. Please try later.');
+}
+
+function allLayersReady() {
+	document.getElementById('map').style.cursor = 'default';
+	for(i in initialOverlays) map.addLayer(initialOverlays[i]);
+	if(!config.showExpired) document.getElementById("showExpired").click(); // turns off the "showExpired" option
+	if(!config.showStale) document.getElementById("showStale").click();	// turns off the "Show Stale" option
+}
+
+function layerFilter(feature) {
+	var deadline, creationDate;
+	if(deadline = feature.properties.deadline) {
+		if(datePassed(config.expiredMargin, deadline)) 
+			return UIOptions.showExpired;
+	} 
+	if(latestActivity = feature.properties.latest_activity_at) {
+		if(datePassed(config.staleMargin, latestActivity) || latestActivity==0 || feature.properties.closed) {
+			return UIOptions.showStale;
+		}
+	}
+	return true;
+}
+
+/* reset layer filters and handlers after a UI option change */
+function setFilters(overlays) {
+	for( i in overlays) {
+		overlays[i].setFilter(layerFilter);
+		overlays[i].eachLayer(function (layer) {
+			layer.on('mouseover', featureHighlight);
+			layer.on('mouseout', featureLowlight);
+			layer.bindLabel(layer.feature.labelContent);
+			layer.setStyle(layer.feature.issueStyle);
+		});
+	}
+}
+
+function setStale(event) {
+	UIOptions.showStale = event.target.checked;
+	event.stopPropagation(event);
+	setFilters(theOverlays);
+}
+
+function setExpired(event) {
+	UIOptions.showExpired = event.target.checked;
+	event.stopPropagation(event);
+	setFilters(theOverlays);
+}
+
+function main() {
+	getUrlConfig();	// Get URL parameters to override the Default configuration (in config.js) 
+	
+	initialiseMap();
+	
+	if(!L.Browser.mobile) {
+		titleBoxControl.show(config.mapTitle);
+		legendBoxControl.show(
+			'<div class = "legend-content">' + 
+			'<img padding-top = 5 src = "images/Legend.png" align = "left">' + 
+			'<div class="showExpired"><form><input id="showExpired" type="checkbox"/>Show</form></div>'  +
+			'<div class="showStale"><nobr> >' + Math.round(config.staleMargin/30) + 
+			' months<form><input id="showStale" type="checkbox"/>Show</form></nobr></div>' +
+			'<div class="infoLink"><a target="_blank" href="' + config.info + '">Further info</a></div></div>' 
+		);
+	} else {
+		legendBoxControl.show(
+			'<div class = "legend-content-mobile">' + 
+			'<div><form><input id="showExpired" type="checkbox"/>Show expired</form></div>'  +
+			'<div ><form><input id="showStale" type="checkbox"/>Show stale</form></div>' +
+			'<div ><a target="_blank" href="' + config.info + '">Further info</a></div></div>' 
+		);
+	}
+	
+	document.getElementById("showStale").addEventListener ("click", setStale, false);
+	document.getElementById("showStale").checked=true;
+	
+	document.getElementById("showExpired").addEventListener ("click", setExpired, false);
+	document.getElementById("showExpired").checked=true;
+	
+	setUpOverlays(layerControl, config.firstMenu, {'coloursReversed': false});
+	if(config.secondMenu) setUpOverlays(auxLayerControl, config.secondMenu, {'coloursReversed': true});
+}
+
+</script>
+</body>
+</html>

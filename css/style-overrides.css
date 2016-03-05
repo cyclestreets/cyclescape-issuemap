@@ -1,0 +1,104 @@
+/*
+	IssueMap overrides to standard Mapbox css
+*/
+
+.leaflet-control-messagebox {
+	box-shadow: 0 1px 5px rgba(5,5,5,0.4);
+	padding-top: 6px;
+	padding-bottom: 6px;
+	background: #fff;
+	border: none;
+	border-radius: 5px;
+	font: 14pt/18pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	width: auto;
+}
+
+.legend-content {
+	width: 180px;
+	min-height: 90px;
+	font: 9pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.legend-content-mobile {
+	text-align: left;
+	font: 7pt/10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.showStale {
+	font: 9pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	white-space: nowrap;
+	position: absolute;
+	float: right;
+	top: 56px;
+	right: 10px;
+}
+
+.showExpired {
+	font: 9pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	position: absolute;
+	float: right;
+	top: 20px;
+	right: 10px;
+}
+
+.infoLink {
+	font: 12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	position: absolute;
+	bottom: 5px;
+	left: 12px;
+}
+
+.leaflet-control-layers-group-name {
+	font: 11pt/14pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	font-style: oblique;
+}
+
+.leaflet-control-layer-menu-item {
+	margin-left: 10px;
+	font: 10pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif; 
+}
+
+.leaflet-control-layers-group {
+  margin-bottom: 0.7em;
+}
+
+.leaflet-control-layers-expanded {
+  max-height: 25em;
+  min-width: 13em;
+  overflow: auto;
+  width: auto;
+}
+
+.leaflet-control-layers-aux-button {
+	min-width: 10.5em;
+	text-align: center;
+	font: 11pt/16pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	font-style: oblique;
+}
+
+
+.leaflet-label {
+	border-width: 2px;
+	white-space: normal;
+	fillOpacity: .1;
+	font: 10pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	z-index: 25;
+	width: 200px;
+}
+
+/* add the external indicator to a link */
+body a.external {
+    background: url(../images/externalIcon.png) center right no-repeat;
+    padding-right: 13px;
+}
+
+body .custom-popup p{
+	font: 10pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+
