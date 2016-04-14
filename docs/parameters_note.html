@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title>Customising the Cyclescape Issue Map</title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="1265.21">
+</head>
+<body>
+<div style="background-color:lightgray">
+<div style = "margin: auto; text-align: justify; padding:5em; background-color: white">
+<h1><center>Customising the Cyclescape Issue Map<br/>for your own website</center></h1>
+<p>You are welcome to install a customised version of the Cyclescape Issue Map on your own site. The details here should enable you to customise it for any location and with a set of layers appropriate to your use of Cyclescape.</p>
+<h2>URL Parameters</h2>
+<p>The map code is hosted at <a href="http://maps.camdencyclists.org.uk/issuemap/index.html">http://maps.camdencyclists.org.uk/issuemap/index.html</a> and can be accessed using a URL with various parameters to specialise the map as below.</p>
+<p>Here is an example:</p>
+<p style="textAlign: left"><a href="http://maps.camdencyclists.org.uk/issuemap/index.html?title=LCC-related%20consultations%20on%20Cyclescape&amp;center=51.53,-0.14&amp;zoom=13&amp;bbox=-0.5534,51.2702,0.2565,51.6936&amp;info=info.html&amp;mainmenu=TfL:tfl/camden,grid*/hackney/islington/Richmond:rcc/wandsworth/westminster/ALL">
+http://maps.camdencyclists.org.uk/issuemap/index.html?<br/>
+title=LCC-related consultations on Cyclescape&amp;<br/>
+center=51.53,-0.14&amp;<br/>zoom=13&amp;<br/>bbox=-0.5534,51.2702,0.2565,51.6936&amp;<br/>info=info.html&amp;<br/>mainmenu=TfL:tfl/camden,grid*/hackney/islington/Richmond:rcc/wandsworth/westminster/ALL</a></p>
+<p>URL parameter lists begin with a '?' and the parameters are separated by  '&'s. <b>Important:</b> There must not be any spaces except where needed in parameter values (as they are in the 'Title' parameter above).</p>
+<p>
+To embed the Issue Map as a page on your own website, use an &lt;iframe&gt with a URL constructed as described in this note. For example, here is an <a href="http://www.gmcc.org.uk/cyclescape-map/" target="_blank">embedded version on the Greater Manchester Cycling Campaign website</a> and here is the relevant HTML code used on that page:
+</p>
+<tt text-align="left">
+&lt;iframe src="http://maps.camdencyclists.org.uk/issuemap/index.html?title=GMCC Cyclescape <br />
+&center=53.51,-2.28&zoom=10&bbox=-2.75,53.3,-1.9,53.7&info=http://www.gmcc.org.uk/cyclescape/info.html <br />
+&secondmenu=none&mainmenu=CCAG:ccag/GMCC:gmcc*/LSTF:lstf/20mph:20mph/ALL*" <br />
+width="100%" height="500" scrolling="yes" class="iframe-class" frameborder="0"&gt;&lt;/iframe&gt;
+</tt>
+<p>
+</p>
+<p>The available parameters are as below. All of them are optional with defaults as shown in the last column.</p>
+
+<table cellspacing="0" cellpadding="10px" border="1px solid gray" width="100%" >
+<!-- 
+	<col span="1" width="100px" align="left">
+ 	<col span="2" width="30%" align="left">
+ <col style='width:20%'>
+  <col style='width:40%'>
+  <col width="40%"/>
+ -->
+  <thead>
+    <tr bgcolor="lightgray" >
+      <th >
+        Parameter
+      </th>
+      <th >
+        Function
+      </th>
+      <th>
+        Default
+      </th>
+    </tr>
+  <thead>
+  <tbody>
+    <tr>
+      <td valign="baseline">
+        <tt>title</tt>
+      </td>
+      <td valign="baseline">
+        Map title to go in box at top right of map
+      </td>
+      <td valign="baseline">
+        <tt>LCC – related consultations on Cyclescape</tt>
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>centre</tt> or <tt>center</tt>
+      </td>
+      <td valign="baseline">
+        Lat/Long of desired centre point
+      </td>
+      <td valign="baseline">
+        <tt>51.51,-0.12</tt> (a point near the centre of London)
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>zoom</tt>
+      </td>
+      <td valign="baseline">
+        Zoom level, higher -&gt; larger scale
+      </td>
+      <td valign="baseline">
+        <tt>13</tt>
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>bbox</tt>
+      </td>
+      <td valign="baseline">
+        A comma-separated list of 4 numbers constituting two long/lat points that define the main diagonal of a bounding rectangle (Issues outside the bbox will be ignored so it's best to be generous when defining it).
+      </td>
+      <td valign="baseline">
+        <tt>-0.5534,51.2702,0.2565,51.6936</tt> (a rectangle enclosing Greater London)
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>baselayer</tt>
+      </td>
+      <td valign="baseline">
+        The initial base map. One of (OSM, Greyscale, MapBox, OpenCycleMap), other names will be ignored.
+      </td>
+      <td valign="baseline">
+        <tt>MapBox</tt>
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>info</tt>
+      </td>
+      <td valign="baseline">
+        URL of an html file containing some notes for user of the map
+      </td>
+      <td valign="baseline">
+        <tt>http://maps.camdencyclists.org.uk/issuemap/info.html</tt> (If you want to provide your own document just give a URL for any html page).
+      </td>
+    </tr>
+     <tr>
+      <td valign="baseline">
+        <tt>showexpired</tt>
+      </td>
+      <td valign="baseline">
+        Issues with deadlines expired > <tt>expiredmargin</tt> days ago are shown at start when <tt>showexpired=true</tt> 
+      </td>
+      <td valign="baseline">
+      	<tt>true</tt>
+      </td>
+    </tr>
+     <tr>
+      <td valign="baseline">
+        <tt>expiredmargin</tt>
+      </td>
+      <td valign="baseline">
+        See above.
+      </td>
+      <td valign="baseline">
+      	<tt>15</tt>
+      </td>
+    </tr>
+     <tr>
+      <td valign="baseline">
+        <tt>showstale</tt>
+      </td>
+      <td valign="baseline">
+        Issues with no activity for > <tt>stalemargin</tt> days are shown at start when <tt>showstale=true</tt> 
+      </td>
+      <td valign="baseline">
+      	<tt>false</tt>
+      </td>
+    </tr>
+     <tr>
+      <td valign="baseline">
+        <tt>stalemargin</tt>
+      </td>
+      <td valign="baseline">
+        See above.
+      </td>
+      <td valign="baseline">
+      	<tt>365</tt>
+      </td>
+    </tr>
+   <tr>
+      <td valign="baseline">
+        <tt>mainmenu</tt>
+      </td>
+      <td valign="baseline">
+        A string defining the selectable layers to be shown in the main menu on the right of the map. (See below for an explanation).
+      </td>
+      <td valign="baseline">
+        <i>See the main menu at <a href="http://lcc.org.uk/pages/consultation-map" target="_blank">http://lcc.org.uk/pages/consultation-map</a></i>
+      </td>
+      <tr>
+      <td valign="baseline">
+        <tt>secondmenu</tt>
+      </td>
+      <td valign="baseline">
+        Controls the presence or absence of a secondary, popup menu immediately below the menu specified in the <tt>mainmenu</tt> parameter. When a <tt>secondmenu</tt> parameter is absent, a popup menu labelled <b>Boroughs</b> is included showing the names of London boroughs. Other contents for the popup menu can be spedified using the same notation used to specify the main menu in the <tt>mainmenu</tt> parameter. 
+        The parameter can be prefixed with a name for the secondary menu terminated by a ':'.  
+        <tt>secondmenu=none</tt> suppresses the secondary menu. <b>NB. On mobile devices the secondary menu is always supressed.</b>
+      </td>
+      <td valign="baseline">
+        <i>See the secondary <b>Boroughs</b> menu at <a href="http://lcc.org.uk/pages/consultation-map" target="_blank">http://lcc.org.uk/pages/consultation-map</a></i>
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>filtertag1</tt>
+      </td>
+      <td valign="baseline">
+      	Specifies a filtering tag and section names for the main menu. See below for an explanation of the encoding of this parameter. <tt>filtertag1=none</tt> suppresses the sub-division of the menu.
+      </td>
+      <td valign="baseline">
+        <tt>filtertag1=consultation:Consultations*:Other Issues</tt> <br/>
+        <i>See the main menu at <a href="http://lcc.org.uk/pages/consultation-map" target="_blank">http://lcc.org.uk/pages/consultation-map</a></i>
+      </td>
+    </tr>
+    <tr>
+      <td valign="baseline">
+        <tt>filtertag2</tt>
+      </td>
+      <td valign="baseline">
+      	Specifies a filtering tag and section names for the second menu. See below for an explanation of the encoding of this parameter. <tt>filtertag2=none</tt> suppresses the sub-division of the menu.
+      </td>
+      <td valign="baseline" >
+        <tt>filtertag2=consultation:Consultations*:Other Issues</tt> <br/>
+        <i>See the secondary menu at <a href="http://lcc.org.uk/pages/consultation-map" target="_blank">http://lcc.org.uk/pages/consultation-map</a></i>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br></p>
+<p><b>Construction of the <tt>mainmenu</tt> and <tt>secondmenu</tt> parameters</b></p>
+<p>The menu item definitions are separated by a ‘/‘</p>
+<p>Each item has 3 parts, two of which can be omitted. We can define an item thus in <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_Form">EBNF notation</a>:</p>
+<p>	[&lt;menu name&gt;:]&lt;tags&gt;[*]</p>
+<p>- if &lt;menu name&gt;: is absent a menu name is constructed from the &lt;tags&gt;.</p>
+<p>- If the final character of an item is ‘*’ the map opens with the item selected. </p>
+<p>Example:</p>
+<p><tt>TfL:tfl</tt> produces a menu item labelled ’TfL’ that selects all Cyclescape issues tagged with ‘tfl’ </p>
+<p><tt>hackney</tt>	produces a a menu item ‘Hackney’ that selects issues tagged ‘hackney’ </p>
+<p><tt>camden,grid*</tt> produces a menu item ‘Camden, Grid’ that selects issues tagged with both ‘camden’ and ‘grid’. The menu item will be selected when the map is launched.</p>
+<p>ALL	this is a special menu item name that selects all Cyclescape issues within the bounding box</p>
+
+<p><b>Construction of the <tt>filtertag1</tt> and <tt>filtertag2</tt> parameters</b></p>
+<p>	&lt;tag&gt;:&lt;special section label&gt;[*]:&lt;other section label&gt;[*]</p>
+Example: 
+        <tt>filtertag2=consultation:Consultations*:Other Issues</tt> <br/>
+
+<p><br></p>
+<p>—————</p>
+<p>GC 24-2-16</p>
+</div>
+</div>
+</body>
+</html>

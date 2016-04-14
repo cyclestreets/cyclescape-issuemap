@@ -12,9 +12,10 @@ var config = {
 	"bbox": "-0.5534,51.2702,0.2565,51.6936",
 	"info": "./info.html",
 	"mapZoom": "13",
+	"baseLayer": "MapBox",
 	"staleMargin": 365, // no. of days without posts
 	"expiredMargin": 15, // extra days beyond expiry date
-	"showExpired": false,
+	"showExpired": true,
 	"showStale": false,
 	"firstMenu": {
 		"name": "Mayors Vision",

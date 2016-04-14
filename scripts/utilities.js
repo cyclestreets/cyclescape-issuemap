@@ -68,8 +68,8 @@ function processTags(aTagString) {
 		menuString = portions[0];
 		tags = portions[1];
 	}
-	if(tags == 'ALL') {
-		menuString = 'ALL';
+	if(tags == 'ALL' || tags == 'OTHER') {
+		menuString = tags;
 		tags = null;
 	} else {
 		// get an array of the tags

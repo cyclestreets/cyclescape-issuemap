@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset=utf-8 />
-<title>LCC issues map</title>
+<title>Cyclescape Issues Map</title>
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 <!-- 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
@@ -29,7 +29,7 @@
 <div id='map'></div>
 <script>
 /* 	Cyclescape Issue Map Application
-	Version 0.4.1, 29 Feb 2016
+	Version 0.4.2, ?? March 2016
 	Author: George Coulouris (with an acknowledgement to Alex Ingram for the prototype) 
 	Permission to use: MIT licence (http://choosealicense.com/licenses/mit)
 */
@@ -47,7 +47,9 @@ areaFill = 0.15;
 areaFillColor = 'gray';
 circleMarkerRadius = 10;
 
-cyclescapeApiUrl = "http://www.cyclescape.org/api/issues/"
+// proxyURL = "http://maps.camdencyclists.org.uk/proxy/curl_proxy_v3.php?url=";
+// proxyURL = "http://anyorigin.com/get/?url=";
+cyclescapeApiUrl = /*proxyURL + */"http://www.cyclescape.org/api/issues/?order=size";
 
 L.mapbox.accessToken = 'pk.eyJ1IjoibnV0dHl4YW5kZXIiLCJhIjoiOGJXbjNMWSJ9.ckqRbehjO-rU86vPSGzMpQ';
 
@@ -60,16 +62,18 @@ L.mapbox.accessToken = null; 	// the code seems to work without the token even t
 
 function getUrlConfig() {
 	var title, center, configCenter = [], specialTag, 
-		zoom, bbox, info, staleMargin, expiredMargin, showExpired, showStale,
+		zoom, bbox, info, baseLayer, staleMargin, expiredMargin, showExpired, showStale,
 		categoryString, categories, overlaySpecs = [], auxOverlaySpecs = [];
 	if(title = urlParam('title')) config.mapTitle = title;
-	if(center = urlParam('center')) {
+	if(!(center = urlParam('center'))) center = urlParam('centre');
+	if(center) {
 		c = center.split(',');
 		configCenter[0] = parseFloat(c[0]);	// convert string to float
 		configCenter[1] = parseFloat(c[1]);	// convert string to float
 		config.mapCenter = configCenter
 	}
 	if(zoom = urlParam('zoom')) config.mapZoom = zoom;
+	if(baseLayer = urlParam('baselayer')) config.baseLayer = baseLayer;
 	if(bbox = urlParam('bbox')) config.bbox = bbox;
 	if(info = urlParam('info')) config.info = info;
 	if(staleMargin = urlParam('stalemargin')) config.staleMargin = staleMargin;
@@ -80,6 +84,7 @@ function getUrlConfig() {
 	function getSpecialTag (specialTag) {
 		var tag, name, otherName;
 		var specialTagFields = specialTag.split(':');
+		if(specialTagFields.length < 3) return null;
 		name = specialTagFields[1].split('*');
 		otherName = specialTagFields[2].split('*');
 		return { 
@@ -91,12 +96,15 @@ function getUrlConfig() {
 		};
 	}
 	
-	if(specialTag1 = urlParam('specialtag1')) 
+	if(!(specialTag1 = urlParam('specialtag1'))) specialTag1 = urlParam('filtertag1');
+	if(specialTag1)
 		config.firstMenu.specialTag = (specialTag1 == "none") ? null : getSpecialTag (specialTag1); 
-	if(specialTag2 = urlParam('specialtag2')) 
+	if(!(specialTag2 = urlParam('specialtag2'))) specialTag1 = urlParam('filtertag2');
+	if(specialTag2)
 		config.secondMenu.specialTag = (specialTag2 == "none") ? null : getSpecialTag (specialTag2); 
 	
-	if(categoryString = urlParam('categories')) {
+	if(!(categoryString = urlParam('categories'))) categoryString = urlParam('mainmenu');
+	if(categoryString) {
 		categories = categoryString.split('/');	
 		if(categories.length > 0) {
 			for(var i in categories) {
@@ -125,6 +133,8 @@ function getUrlConfig() {
 		}
 	}
 }
+
+// L.Browser.mobile = true;  // force mobile mode for testing only
 
 /* base map layers */
 var mapboxAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
@@ -177,24 +187,31 @@ var map, titleBoxControl, legendBoxControl, layerControl, auxLayerControl, mapCo
 var ajaxCount = 0, initialOverlays = [];
 
 function initialiseMap() {
+	var layer = config.baseLayer;
+
 	map = L.map('map', {
 	// map options
 		center: config.mapCenter,
 		zoom: config.mapZoom,
-		layers: [streets],
+		layers: [baseLayers[config.baseLayer] || streets, adminBoundaries],
 	// UI options
 		doubleClickZoom: false, // so rapid clicks on tickboxes don't zoom the map!
 	});
 	
-	
-	map.addLayer(adminBoundaries);
+/*
+map.attributionControl.getContainer().style.overflow = 'hidden';
+map.attributionControl.getContainer().style.textOverflow = 'clip';
+
+*/ 
+
+	// map.addLayer(adminBoundaries);
 	titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
 	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
 	layerControl = L.control.groupedLayers(null, null, 
-		{collapsed: L.Browser.mobile, position: 'topright', groupCheckboxes: false, 
+		{collapsed: false, position: 'topright', groupCheckboxes: false, 
 			title: config.firstMenu.name}).addTo(map);
 	
-	if(config.secondMenu) {
+	if(config.secondMenu && ! L.Browser.mobile) {
 		auxLayerControl = L.control.groupedLayers(null, null, 
 		{collapsed: true, position: 'topright', groupCheckboxes: true, title: config.secondMenu.name}).addTo(map);	
 	}
@@ -323,6 +340,7 @@ function fixUp(event) {
 
 function setUpOverlays(layerControl, menuSpec, options) {
 	var baseURL = cyclescapeApiUrl + '?order=size' + '&bbox=' + config.bbox;
+	var tagsUsed = [], otherFlag = false;
 	
     L.Util.setOptions(this, options);
     
@@ -338,6 +356,12 @@ function setUpOverlays(layerControl, menuSpec, options) {
 						style: {color: color},
 						pointToLayer: circleMarker
 					};
+//		if(spec.menuItem == '<span class="leaflet-control-layer-menu-item">OTHER</>') {
+		if(spec.menuItem == 'OTHER') { 
+			otherFlag = true;
+			break;
+		}
+		tagsUsed.push(spec.tags);
 					
 		function setUp(specialTag, tags, excludedTags, initiallyOn, sectionName) {
 			var url = baseURL;
@@ -346,6 +370,7 @@ function setUpOverlays(layerControl, menuSpec, options) {
 			else
 				url += tags ? '&tags=[' + tags +']' : '';			
 			if(excludedTags) url += '&excluding_tags=[' + excludedTags + ']';
+// console.log(aName + ': ' + url);
 			overlay = L.mapbox.featureLayer(null, options).loadURL(url);
 			ajaxCount += 1;
 			layerControl.addOverlay(overlay, aName, sectionName);
@@ -365,6 +390,24 @@ function setUpOverlays(layerControl, menuSpec, options) {
 		} else {
 			setUp(null, spec.tags, null, spec.onOff=="on", null);
 		}
+	}
+	// OTHER must go last
+	if(otherFlag) {
+		var allTags = "";
+		aName = '<span class="leaflet-control-layer-menu-item"><b>OTHER</b></span>';
+		for(i in tagsUsed) {
+			allTags += (i>0 ? ',' : '') + tagsUsed[i];
+		}
+// console.log('allTags:' +  allTags); 
+		if(menuSpec.specialTag) {
+			setUp(menuSpec.specialTag.tag, null, allTags, 
+				(menuSpec.specialTag.specialOnOff=="on"), menuSpec.specialTag.name);
+			setUp(null, null, allTags + ',' + menuSpec.specialTag.tag,
+				(menuSpec.specialTag.otherOnOff=="on"), menuSpec.specialTag.otherName); // excluding the special tag
+		} else {
+			setUp(null, null, allTags, true, null);
+		}
+		
 	}
 }
 
@@ -449,7 +492,7 @@ function main() {
 	document.getElementById("showExpired").checked=true;
 	
 	setUpOverlays(layerControl, config.firstMenu, {'coloursReversed': false});
-	if(config.secondMenu) setUpOverlays(auxLayerControl, config.secondMenu, {'coloursReversed': true});
+	if(auxLayerControl) setUpOverlays(auxLayerControl, config.secondMenu, {'coloursReversed': true});
 }
 
 </script>

@@ -4,7 +4,7 @@
 // Author: Ishmael Smyrnow
 
 // Modified by George Coulouris 1 Feb 2016:
-// Lines 99-101:å added feature to replace the collapsed icon with an optional title string
+// Lines 99-101: added feature to replace the collapsed icon with an optional title string
 
 L.Control.GroupedLayers = L.Control.extend({
 
@@ -104,6 +104,7 @@ L.Control.GroupedLayers = L.Control.extend({
 
       if (L.Browser.touch) {
         L.DomEvent
+            .on(container, 'click', this._expand, this)  // added by GC
             .on(link, 'click', L.DomEvent.stop)
             .on(link, 'click', this._expand, this);
       }
