@@ -10,7 +10,7 @@ var config = {
 	"mapTitle": "LCC – related consultations on Cyclescape",
 	"mapCenter": [51.51, -0.12],
 	"bbox": "-0.5534,51.2702,0.2565,51.6936",
-	"info": "./info.html",
+	"info": "./docs/info.html",
 	"mapZoom": "13",
 	"baseLayer": "MapBox",
 	"staleMargin": 365, // no. of days without posts
