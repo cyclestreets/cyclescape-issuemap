@@ -4,10 +4,8 @@
 <meta charset=utf-8 />
 <title>Cyclescape Issues Map</title>
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-<!-- 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
- -->
-<script src='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.js'></script>
+
+<script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
 <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
 <link href='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.css' rel='stylesheet' />
 <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
@@ -29,7 +27,7 @@
 <div id='map'></div>
 <script>
 /* 	Cyclescape Issue Map Application
-	Version 0.4.2, ?? March 2016
+	Version 0.5, September 2016
 	Author: George Coulouris (with an acknowledgement to Alex Ingram for the prototype) 
 	Permission to use: MIT licence (http://choosealicense.com/licenses/mit)
 */
@@ -47,9 +45,9 @@ areaFill = 0.15;
 areaFillColor = 'gray';
 circleMarkerRadius = 10;
 
-// proxyURL = "http://maps.camdencyclists.org.uk/proxy/curl_proxy_v3.php?url=";
-// proxyURL = "http://anyorigin.com/get/?url=";
-cyclescapeApiUrl = /*proxyURL + */"http://www.cyclescape.org/api/issues/?order=size";
+var deadlines = [];
+
+cyclescapeApiUrl = "http://www.cyclescape.org/api/issues/?order=size";
 
 L.mapbox.accessToken = 'pk.eyJ1IjoibnV0dHl4YW5kZXIiLCJhIjoiOGJXbjNMWSJ9.ckqRbehjO-rU86vPSGzMpQ';
 
@@ -183,7 +181,8 @@ var baseOverlays = {
 	"Borough Boundaries" : adminBoundaries
 };
 
-var map, titleBoxControl, legendBoxControl, layerControl, auxLayerControl, mapControl, theOverlays = [];
+var map, titleBoxControl, legendBoxControl, layerControl, deadlineListControl,
+	auxLayerControl, mapControl, theOverlays = [];
 var ajaxCount = 0, initialOverlays = [];
 
 function initialiseMap() {
@@ -198,15 +197,13 @@ function initialiseMap() {
 		doubleClickZoom: false, // so rapid clicks on tickboxes don't zoom the map!
 	});
 	
-/*
-map.attributionControl.getContainer().style.overflow = 'hidden';
-map.attributionControl.getContainer().style.textOverflow = 'clip';
-
-*/ 
-
-	// map.addLayer(adminBoundaries);
 	titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
 	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	
+	// for displaying a list of issues with unexpired deadlines
+	deadlineListControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	deadlineListControl.getContainer().classList.add('deadline-list-container');
+	
 	layerControl = L.control.groupedLayers(null, null, 
 		{collapsed: false, position: 'topright', groupCheckboxes: false, 
 			title: config.firstMenu.name}).addTo(map);
@@ -270,7 +267,7 @@ function fixUp(event) {
 	var overlayGeojson = theOverlay.getGeoJSON();
 		
 	for (i in overlayGeojson.features) {
-		var description, descriptionPrefix ='<table width=100%><tr>', descriptionPostfix = '', photo, deadline, external_url;
+		var description, descriptionPrefix ='<table width=100%><tr>', descriptionPostfix = '', photo, deadline, deadlineDetails, external_url;
 
 		if ( photo = overlayGeojson.features[i].properties.photo_thumb_url)  //assignment
 			descriptionPrefix += 
@@ -289,8 +286,17 @@ function fixUp(event) {
 				"'><b>View consultation details</b></a><br/>";
 		}
 
-		if(deadline = overlayGeojson.features[i].properties.deadline)
+		if(deadline = overlayGeojson.features[i].properties.deadline) {
 			descriptionPrefix += '<b>Deadline: ' + customDateString(deadline) + '</b><br/>';
+			deadlineDetails = {
+					deadline: deadline,
+					title: overlayGeojson.features[i].properties.title, 
+					external_url: external_url,
+					cyclescape_url: overlayGeojson.features[i].properties.cyclescape_url,
+					tags: overlayGeojson.features[i].properties.tags
+				}
+			deadlines.push(deadlineDetails); 
+		}
 			
 		descriptionPrefix +=  '</div></td></tr></table>';
 		
@@ -370,7 +376,6 @@ function setUpOverlays(layerControl, menuSpec, options) {
 			else
 				url += tags ? '&tags=[' + tags +']' : '';			
 			if(excludedTags) url += '&excluding_tags=[' + excludedTags + ']';
-// console.log(aName + ': ' + url);
 			overlay = L.mapbox.featureLayer(null, options).loadURL(url);
 			ajaxCount += 1;
 			layerControl.addOverlay(overlay, aName, sectionName);
@@ -398,7 +403,6 @@ function setUpOverlays(layerControl, menuSpec, options) {
 		for(i in tagsUsed) {
 			allTags += (i>0 ? ',' : '') + tagsUsed[i];
 		}
-// console.log('allTags:' +  allTags); 
 		if(menuSpec.specialTag) {
 			setUp(menuSpec.specialTag.tag, null, allTags, 
 				(menuSpec.specialTag.specialOnOff=="on"), menuSpec.specialTag.name);
@@ -406,8 +410,7 @@ function setUpOverlays(layerControl, menuSpec, options) {
 				(menuSpec.specialTag.otherOnOff=="on"), menuSpec.specialTag.otherName); // excluding the special tag
 		} else {
 			setUp(null, null, allTags, true, null);
-		}
-		
+		}	
 	}
 }
 
@@ -420,6 +423,50 @@ function allLayersReady() {
 	for(i in initialOverlays) map.addLayer(initialOverlays[i]);
 	if(!config.showExpired) document.getElementById("showExpired").click(); // turns off the "showExpired" option
 	if(!config.showStale) document.getElementById("showStale").click();	// turns off the "Show Stale" option
+	
+	// make deadline list html
+	
+	var deadlineListHtml = "<button id='closeButton'>X</button>" + "<h2>Upcoming and recent deadlines:</h2>";
+
+	deadlines.sort(function(a, b) {
+    return b.deadline - a.deadline;
+		});
+	for(i in deadlines) {
+		if(!datePassed(0, deadlines[i].deadline)) 
+			deadlineListHtml += deadLineHtml(deadlines[i]) + '<br/>';
+		else
+			break;
+	}
+	deadlineListHtml += '<hr/>';
+	for(i in deadlines) {
+		if(!datePassed(0, deadlines[i].deadline)) 
+			continue;
+		else if(!datePassed(config.expiredMargin, deadlines[i].deadline)) 
+			deadlineListHtml += '<i>' + deadLineHtml(deadlines[i]) + '</i><br/>';
+		else
+			break;
+	}
+	
+	function deadLineHtml(deadlineRecord) {
+		var tags = deadlineRecord.tags.slice(0);	// copy the elements of the array
+
+		for (i=tags.length-1; i>=0; i--)  // remove 'consultation' tags
+			if(tags[i] == 'consultation') tags.splice(i,1);
+
+		return 	customDateString(deadlineRecord.deadline) + ': ' + deadlineRecord.title +
+				' (' + tags + ')<a class="external" target="_blank" href="' + 
+				deadlineRecord.external_url + '"> Consultation' + '</a>' +
+				' | <a target="_blank" href="' + 
+				deadlineRecord.cyclescape_url + '"> Discussion' + '</a>';
+	}
+	
+	deadlineListControl.hide();
+	deadlineListControl.load( '<div id="deadline-list">' + deadlineListHtml + '</div>');	
+	// close button for deadlineListControl
+	document.getElementById('closeButton').onclick = 
+		function(e) {
+			deadlineListControl.hide();
+		};
 }
 
 function layerFilter(feature) {
@@ -461,6 +508,10 @@ function setExpired(event) {
 	setFilters(theOverlays);
 }
 
+function DeadlinesPopup() {
+	deadlineListControl.toggle();
+}
+
 function main() {
 	getUrlConfig();	// Get URL parameters to override the Default configuration (in config.js) 
 	
@@ -469,12 +520,14 @@ function main() {
 	if(!L.Browser.mobile) {
 		titleBoxControl.show(config.mapTitle);
 		legendBoxControl.show(
-			'<div class = "legend-content">' + 
+			'<div id = "legend-content-desktop" class = "legend-content">' + 
 			'<img padding-top = 5 src = "images/Legend.png" align = "left">' + 
 			'<div class="showExpired"><form><input id="showExpired" type="checkbox"/>Show</form></div>'  +
 			'<div class="showStale"><nobr> >' + Math.round(config.staleMargin/30) + 
 			' months<form><input id="showStale" type="checkbox"/>Show</form></nobr></div>' +
-			'<div class="infoLink"><a target="_blank" href="' + config.info + '">Further info</a></div></div>' 
+			'<div class="infoLink"><a target="_blank" href="' + config.info + '">Further info</a></div>' +
+			'<div class="deadlineLink"><a href="#" onclick="DeadlinesPopup();return false;">Upcoming deadlines</a></div>' +
+			'</div>' 
 		);
 	} else {
 		legendBoxControl.show(
@@ -484,6 +537,7 @@ function main() {
 			'<div ><a target="_blank" href="' + config.info + '">Further info</a></div></div>' 
 		);
 	}
+//	L.DomEvent.disableClickPropagation(document.getElementById('legend-content-desktop'));
 	
 	document.getElementById("showStale").addEventListener ("click", setStale, false);
 	document.getElementById("showStale").checked=true;

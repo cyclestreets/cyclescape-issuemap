@@ -10,12 +10,12 @@ var config = {
 	"mapTitle": "LCC – related consultations on Cyclescape",
 	"mapCenter": [51.51, -0.12],
 	"bbox": "-0.5534,51.2702,0.2565,51.6936",
-	"info": "./info.html",
+	"info": "./docs/info.html",
 	"mapZoom": "13",
 	"baseLayer": "MapBox",
 	"staleMargin": 365, // no. of days without posts
-	"expiredMargin": 15, // extra days beyond expiry date
-	"showExpired": true,
+	"expiredMargin": 30, // extra days beyond expiry date
+	"showExpired": false,
 	"showStale": false,
 	"firstMenu": {
 		"name": "Mayors Vision",
@@ -23,9 +23,9 @@ var config = {
 			{
 				"name": "Consultations",
 				"tag": "\"consultation\"",
-				"otherName": "Other Issues",
+				"otherName": "Other Discussions",
 				"specialOnOff":"on",
-				"otherOnOff": "off"
+				"otherOnOff": "on"
 			},
 		"selectors": [  
 		   {  
@@ -48,6 +48,11 @@ var config = {
 			  "menuItem":"Quietways",
 			  "onOff":"on"
 		   },
+		   {  
+			  "tags":"\"car-free-places\"",
+			  "menuItem":"Car Free Places",
+			  "onOff":"on"
+		   },
 		],
 	},
 	"secondMenu": {
@@ -63,92 +68,97 @@ var config = {
 		   {  
 			  "tags":"\"tfl\"",
 			  "menuItem":"TfL",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"bromley\"",
 			  "menuItem":"Bromley",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"camden\"",
 			  "menuItem":"Camden",
-			  "onOff":"off"
+			  "onOff":"on"
+		   },
+		   {  
+			  "tags":"\"city-of-london\"",
+			  "menuItem":"City of London",
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"croydon\"",
 			  "menuItem":"Croydon",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"ealing\"",
 			  "menuItem":"Ealing",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"enfield\"",
 			  "menuItem":"Enfield",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"hackney\"",
 			  "menuItem":"Hackney",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"hounslow\"",
 			  "menuItem":"Hounslow",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"kensington-and-chelsea\"",
 			  "menuItem":"Ken & Chelsea",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"lambeth\"",
 			  "menuItem":"Lambeth",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"newham\"",
 			  "menuItem":"Newham",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"islington\"",
 			  "menuItem":"Islington",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"richmond\"",
 			  "menuItem":"Richmond",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"southwark\"",
 			  "menuItem":"Southwark",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"tower-hamlets\"",
 			  "menuItem":"Tower Hamlets",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"waltham-forest\"",
 			  "menuItem":"Waltham Forest",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"wandsworth\"",
 			  "menuItem":"Wandsworth",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		   {  
 			  "tags":"\"westminster\"",
 			  "menuItem":"Westminster",
-			  "onOff":"off"
+			  "onOff":"on"
 		   },
 		]
 	}
