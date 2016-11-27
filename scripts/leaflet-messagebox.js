@@ -1,5 +1,8 @@
 /* 
-	modified by @georgio to eliminate timeout if no timeout option is set
+	modified by @georgio to:
+		- eliminate timeout if no timeout option is set
+		- add new methods: load, hide, toggle
+		- modified show(messge) so that the content is unchanged if message is null
 */
 L.Control.Messagebox = L.Control.extend({
     options: {
@@ -9,13 +12,17 @@ L.Control.Messagebox = L.Control.extend({
 
     onAdd: function (map) {
         this._container = L.DomUtil.create('div', 'leaflet-control-messagebox');
-        //L.DomEvent.disableClickPropagation(this._container);
+        L.DomEvent.disableClickPropagation(this._container);
         return this._container;
+    },
+    
+    load: function (message) {
+    	this._container.innerHTML = message;
     },
 
     show: function (message) {
         var elem = this._container;
-        elem.innerHTML = message;
+        if(message) elem.innerHTML = message;
         elem.style.display = 'block';
 
 		if(this.options.timeout) {
@@ -27,7 +34,15 @@ L.Control.Messagebox = L.Control.extend({
 				elem.style.display = 'none';
 			}, timeout);
         }
-
+    },
+    
+    hide() {
+        this._container.style.display = 'none';
+    },
+    
+    toggle() {
+    	if(this._container.style.display == 'none') this._container.style.display = 'block';
+    	else this._container.style.display = 'none';
     }
 });
 

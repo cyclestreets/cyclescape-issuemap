@@ -14,8 +14,8 @@
 }
 
 .legend-content {
-	width: 180px;
-	min-height: 90px;
+	width: 210px;
+	min-height: 95px;
 	font: 9pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
@@ -44,11 +44,19 @@
 }
 
 .infoLink {
-	font: 12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 8pt "Helvetica Neue", Arial, Helvetica, sans-serif;
 	font-weight: bold;
 	position: absolute;
 	bottom: 5px;
 	left: 12px;
+}
+
+.deadlineLink {
+	font: 8pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
 }
 
 .leaflet-control-layers-group-name {
@@ -81,7 +89,6 @@
 	font-style: oblique;
 }
 
-
 .leaflet-label {
 	border-width: 2px;
 	white-space: normal;
@@ -89,6 +96,22 @@
 	font: 10pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
 	z-index: 25;
 	width: 200px;
+}
+
+#deadline-list {
+	padding-top: 10px;
+//	margin-left: 20px;
+	text-align: left;
+	overflow: auto;
+//	width: 300px;
+	max-height: 400px;
+	font: 10pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif; 
+}
+
+#closeButton {
+    position: absolute;
+    top: 3px;
+    right: 3px;
 }
 
 /* add the external indicator to a link */
