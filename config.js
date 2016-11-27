@@ -1,7 +1,7 @@
 /* Default configuration for Issue Map
  * settings for London Cycling Campaign
  * equivalent to URL parameters:
-http://maps.camdencyclists.org.uk/issuemap/issuemap_test.html?title=LCC-related%20consultations%20on%20Cyclescape&center=51.51,-0.12&zoom=13&bbox=-0.5534,51.29,0.2565,51.6936&categories=TfL:tfl* /camden/islington/Richmond:rcc/wandsworth/westminster
+https://issuemap.cyclescape.org/issuemap_test.html?title=LCC-related%20consultations%20on%20Cyclescape&center=51.51,-0.12&zoom=13&bbox=-0.5534,51.29,0.2565,51.6936&categories=TfL:tfl* /camden/islington/Richmond:rcc/wandsworth/westminster
 
  * 12 Jan 2016
  */
