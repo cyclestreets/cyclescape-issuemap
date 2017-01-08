@@ -5,10 +5,8 @@
 <title>Cyclescape Issues Map</title>
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
-<script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
-<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
-<link href='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.css' rel='stylesheet' />
-<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox.js/v3.0.1/mapbox.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/v3.0.1/mapbox.css' rel='stylesheet' />
 <script src="scripts/leaflet-messagebox.js"></script>
 <script src="scripts/leaflet.groupedlayercontrol.js"></script>
 <script src="scripts/utilities.js"></script>
@@ -43,7 +41,10 @@ thickDashArray = '15, 5';
 thinDashArray = '10, 5';
 areaFill = 0.15;
 areaFillColor = 'gray';
-circleMarkerRadius = 10;
+circleMarkerRadius = 8;
+thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className: "custom-popup"};
+toolTipOptions = {className: "tooltip"};
+
 
 var deadlines = [];
 
@@ -166,8 +167,6 @@ var mapnik_BlackAndWhite = L.tileLayer(mapnikBwUrl,
 		{maxZoom: 18, attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity: 0.8});
 var adminBoundaries = L.tileLayer(adminBoundariesUrl);
 
-var thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className: "custom-popup"};
-
 var UIOptions = {showStale: true, showExpired: true};
 
 var baseLayers = {
@@ -218,11 +217,6 @@ function initialiseMap() {
 /* To invoke when a feature is represented by a single point */
 function circleMarker(feature, latlng) {
 	return new L.CircleMarker(latlng, {radius: circleMarkerRadius});
-}
-
-/* To invoke when a feature is represented by a single point */
-function iconMarker(feature, latlng) {
-	return new L.Marker(latlng, {});
 }
 
 /* Mouse Event handlers */
@@ -330,8 +324,8 @@ function fixUp(event) {
 				labelContent += '<br/><i><b>Deadline: ' + customDateString(deadline) + '</b></i>';
 			if(latestActivity = layer.feature.properties.latest_activity_at) 
 				labelContent += '<br/><i>Latest post: ' + customDateString(latestActivity) + '</i>';
-			layer.feature.labelContent = labelContent;
-			layer.bindLabel(layer.feature.labelContent);
+			layer.feature.labelContent = '<div>' + labelContent + '</div>';
+			layer.bindTooltip(layer.feature.labelContent, toolTipOptions);
 			
 			var style = defineStyle(layer);			
 			layer.setStyle(style);
@@ -490,7 +484,7 @@ function setFilters(overlays) {
 		overlays[i].eachLayer(function (layer) {
 			layer.on('mouseover', featureHighlight);
 			layer.on('mouseout', featureLowlight);
-			layer.bindLabel(layer.feature.labelContent);
+			layer.bindTooltip(layer.feature.labelContent, toolTipOptions);
 			layer.setStyle(layer.feature.issueStyle);
 		});
 	}
