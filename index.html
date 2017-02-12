@@ -1,14 +1,19 @@
 <!DOCTYPE html>
+<!-- 
+ 	Cyclescape Issue Map Application
+	Version 0.7, February 2017
+	Author: George Coulouris (george@coulouris.net) @georgio8
+	Permission to use: MIT licence (http://choosealicense.com/licenses/mit)
+ -->
+
 <html>
 <head>
 <meta charset=utf-8 />
 <title>Cyclescape Issues Map</title>
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
-<script src='https://api.mapbox.com/mapbox.js/v2.4.0/mapbox.js'></script>
-<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.js'></script>
-<link href='https://api.mapbox.com/mapbox.js/v2.2.3/mapbox.css' rel='stylesheet' />
-<link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-label/v0.2.1/leaflet.label.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox.js/v3.0.1/mapbox.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/v3.0.1/mapbox.css' rel='stylesheet' />
 <script src="scripts/leaflet-messagebox.js"></script>
 <script src="scripts/leaflet.groupedlayercontrol.js"></script>
 <script src="scripts/utilities.js"></script>
@@ -25,39 +30,20 @@
 
 <body onload="main()">
 <div id='map'></div>
+
 <script>
-/* 	Cyclescape Issue Map Application
-	Version 0.5, September 2016
-	Author: George Coulouris (with an acknowledgement to Alex Ingram for the prototype) 
-	Permission to use: MIT licence (http://choosealicense.com/licenses/mit)
-*/
-
-/* Constants */
-deadlineWidth = 12;
-noDeadlineWidth = 5;
-rolloverWidth = 20;
-lineOpacity = 0.5;
-rolloverOpacity = 1;
-dashArray = '1, 20';
-thickDashArray = '15, 5';
-thinDashArray = '10, 5';
-areaFill = 0.15;
-areaFillColor = 'gray';
-circleMarkerRadius = 10;
-
+/* Globals */
+var map, titleBoxControl, legendBoxControl, layerControl, deadlineListControl,
+	auxLayerControl, mapControl, theOverlays = [];
+var ajaxCount = 0, initialOverlays = [];
 var deadlines = [];
 
-cyclescapeApiUrl = "https://www.cyclescape.org/api/issues/?order=size";
+// L.Browser.mobile = true;  // force mobile mode for testing only
 
-L.mapbox.accessToken = 'pk.eyJ1IjoibnV0dHl4YW5kZXIiLCJhIjoiOGJXbjNMWSJ9.ckqRbehjO-rU86vPSGzMpQ';
-
-/*
-	Needed for access to the mapbox tile server only ?
-L.mapbox.accessToken = null; 	// the code seems to work without the token even though
-								// it uses a couple of mapbox-specific functions
-								// but the token is needed to use the api.tiles.mapbox.com server
+/* 
+	getUrlConfig applies the changes to the config object specified in URL params 
+	(see https://issuemap.cyclescape.org/docs/parameters_note.html 
 */
-
 function getUrlConfig() {
 	var title, center, configCenter = [], specialTag, 
 		zoom, bbox, info, baseLayer, staleMargin, expiredMargin, showExpired, showStale,
@@ -130,60 +116,7 @@ function getUrlConfig() {
 			config.secondMenu.selectors = auxOverlaySpecs;
 		}
 	}
-}
-
-// L.Browser.mobile = true;  // force mobile mode for testing only
-
-/* base map layers */
-var mapboxAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
-		'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-		'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-	osmAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
-	cyclescapeAttribution = 'Issue data:<a href="http://blog.cyclescape.org/about/"> Cyclescape </a> | ',
-	cartoDbAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, Map tiles by CartoDB, under CC BY 3.0',
-		
-	mapboxUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken,
-	mapQuestUrl = 'http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
-	cartoDbLightUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-	OSMUrl = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-	cycleMapUrl = 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png';
-	mapnikBwUrl ='http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png';
-	// following URL found at http://korona.geog.uni-heidelberg.de/contact.html
-	// adminBoundariesUrl = 'http://129.206.66.245:8007/tms_b.ashx?x={x}&y={y}&z={z}'; 
-	adminBoundariesUrl = 'http://korona.geog.uni-heidelberg.de/tiles/adminb/x={x}&y={y}&z={z}'; 
-
-var streets = L.tileLayer(mapboxUrl, {id: 'mapbox.streets', 
-		attribution: L.Browser.mobile ? '' : cyclescapeAttribution + mapboxAttribution});
-var cartoDbLight = L.tileLayer(cartoDbLightUrl, 
-		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + cartoDbAttribution});
-var mapQuest = L.tileLayer(mapQuestUrl, 
-		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution});
-var openStreetMap = L.tileLayer(OSMUrl, 
-		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity:0.7});
-var opencyclemap = L.tileLayer(cycleMapUrl, 
-		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity:0.7});
-var mapnik_BlackAndWhite = L.tileLayer(mapnikBwUrl, 
-		{maxZoom: 18, attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity: 0.8});
-var adminBoundaries = L.tileLayer(adminBoundariesUrl);
-
-var thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className: "custom-popup"};
-
-var UIOptions = {showStale: true, showExpired: true};
-
-var baseLayers = {
-	"OSM": openStreetMap,
-	"Greyscale" : mapnik_BlackAndWhite,
-	"MapBox": streets,
-	"OpenCycleMap": opencyclemap
-};
-
-var baseOverlays = {
-	"Borough Boundaries" : adminBoundaries
-};
-
-var map, titleBoxControl, legendBoxControl, layerControl, deadlineListControl,
-	auxLayerControl, mapControl, theOverlays = [];
-var ajaxCount = 0, initialOverlays = [];
+} // getUrlConfig()
 
 function initialiseMap() {
 	var layer = config.baseLayer;
@@ -196,42 +129,14 @@ function initialiseMap() {
 	// UI options
 		doubleClickZoom: false, // so rapid clicks on tickboxes don't zoom the map!
 	});
-	
-	titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
-	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
-	
-	// for displaying a list of issues with unexpired deadlines
-	deadlineListControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
-	deadlineListControl.getContainer().classList.add('deadline-list-container');
-	
-	layerControl = L.control.groupedLayers(null, null, 
-		{collapsed: false, position: 'topright', groupCheckboxes: false, 
-			title: config.firstMenu.name}).addTo(map);
-	
-	if(config.secondMenu && ! L.Browser.mobile) {
-		auxLayerControl = L.control.groupedLayers(null, null, 
-		{collapsed: true, position: 'topright', groupCheckboxes: true, title: config.secondMenu.name}).addTo(map);	
-	}
-	mapControl = L.control.layers(baseLayers, baseOverlays, {collapsed: true, position: 'bottomright'}).addTo(map);	
-}
+		
+	mapControl = L.control.layers(baseLayers, baseOverlays, {collapsed: true, position: 'bottomright'}).addTo(map);
 
-/* To invoke when a feature is represented by a single point */
+} // initialiseMap()
+
+/* Used when a feature is represented by a single point */
 function circleMarker(feature, latlng) {
 	return new L.CircleMarker(latlng, {radius: circleMarkerRadius});
-}
-
-/* To invoke when a feature is represented by a single point */
-function iconMarker(feature, latlng) {
-	return new L.Marker(latlng, {});
-}
-
-/* Mouse Event handlers */
-function featureHighlight(event) {
-	event.target.setStyle({opacity:rolloverOpacity});
-}
-
-function featureLowlight(event) {
-	event.target.setStyle(event.target.feature.issueStyle);
 }
 
 function defineStyle (aLayer) {
@@ -244,22 +149,24 @@ function defineStyle (aLayer) {
 */
 var style = {fill: false, fillOpacity: areaFill, fillColor: areaFillColor, 
 				weight: noDeadlineWidth, opacity: lineOpacity, lineCap: 'butt'};
+var deadline = aLayer.feature.properties.deadline,
+	latestActivity = aLayer.feature.properties.latest_activity_at;
 
 	if(aLayer.feature.geometry.type == 'Polygon')  style.fill = true;
 
-	if(deadline = aLayer.feature.properties.deadline) {
+	if(deadline) {
 		style.weight = deadlineWidth;
 		if(datePassed(config.expiredMargin, deadline)) {
 			style.dashArray = thickDashArray;
 		}
 	} 
-	if(latestActivity = aLayer.feature.properties.latest_activity_at) {
+	if(latestActivity) {
 		if(datePassed(config.staleMargin, latestActivity) || latestActivity==0) {
 			style.dashArray = thinDashArray;
 		}
 	}
 	return style;
-}
+} // defineStyle()
 
 /* called after each Cyclescape Issue is loaded */
 function fixUp(event) {
@@ -321,7 +228,6 @@ function fixUp(event) {
 			descriptionPrefix + description + descriptionPostfix;
 	}
 	theOverlay.setGeoJSON(overlayGeojson);
-	theOverlay.setFilter(layerFilter);
 
 	// add the rollover labels to the features
 	theOverlay.eachLayer(function (layer) {
@@ -330,8 +236,8 @@ function fixUp(event) {
 				labelContent += '<br/><i><b>Deadline: ' + customDateString(deadline) + '</b></i>';
 			if(latestActivity = layer.feature.properties.latest_activity_at) 
 				labelContent += '<br/><i>Latest post: ' + customDateString(latestActivity) + '</i>';
-			layer.feature.labelContent = labelContent;
-			layer.bindLabel(layer.feature.labelContent);
+			layer.feature.labelContent = '<div>' + labelContent + '</div>';
+			layer.bindTooltip(layer.feature.labelContent, toolTipOptions);
 			
 			var style = defineStyle(layer);			
 			layer.setStyle(style);
@@ -342,7 +248,7 @@ function fixUp(event) {
 	);
 	ajaxCount -= 1;
 	if(ajaxCount == 0) allLayersReady();
-}
+} // fixUp()
 
 function setUpOverlays(layerControl, menuSpec, options) {
 	var baseURL = cyclescapeApiUrl + '?order=size' + '&bbox=' + config.bbox;
@@ -412,24 +318,27 @@ function setUpOverlays(layerControl, menuSpec, options) {
 			setUp(null, null, allTags, true, null);
 		}	
 	}
-}
+} // setUpOverlays()
 
-function ajaxFailure(event) {
-	alert('Failed to establish connection to Cyclescape server. Please try later.');
-}
-
+/* called when all the issue records have been received and augmented by fixUp() */
 function allLayersReady() {
 	document.getElementById('map').style.cursor = 'default';
-	for(i in initialOverlays) map.addLayer(initialOverlays[i]);
-	if(!config.showExpired) document.getElementById("showExpired").click(); // turns off the "showExpired" option
-	if(!config.showStale) document.getElementById("showStale").click();	// turns off the "Show Stale" option
 	
-	// make deadline list html
+	setFilters(theOverlays); // for all the layers we have processed
+
+	// for(i in initialOverlays) map.addLayer(initialOverlays[i]);
+	for(i in theOverlays) map.addLayer(theOverlays[i]);
 	
-	var deadlineListHtml = "<button id='closeButton'>X</button>" + "<h2>Upcoming and recent deadlines:</h2>";
+	setupDeadlineList();
+
+} // allLayersReady()
+
+/* select upcoming issues for display in the deadlineList popup */
+function setupDeadlineList() {
+	var deadlineListHtml = "<button id='closeButton'>X</button>" + "<b>Upcoming deadlines</b><br/>";
 
 	deadlines.sort(function(a, b) {
-    return b.deadline - a.deadline;
+    		return b.deadline - a.deadline;
 		});
 	for(i in deadlines) {
 		if(!datePassed(0, deadlines[i].deadline)) 
@@ -437,7 +346,7 @@ function allLayersReady() {
 		else
 			break;
 	}
-	deadlineListHtml += '<hr/>';
+	deadlineListHtml += '<hr/> <b>Recently passed deadlines</b><br/>';
 	for(i in deadlines) {
 		if(!datePassed(0, deadlines[i].deadline)) 
 			continue;
@@ -466,22 +375,23 @@ function allLayersReady() {
 	document.getElementById('closeButton').onclick = 
 		function(e) {
 			deadlineListControl.hide();
+			document.getElementById("deadlinesListCbox").checked = false;
 		};
-}
+} // setupDeadlineList()
 
+/* Assigned to each feature */
 function layerFilter(feature) {
-	var deadline, creationDate;
-	if(deadline = feature.properties.deadline) {
-		if(datePassed(config.expiredMargin, deadline)) 
-			return UIOptions.showExpired;
-	} 
-	if(latestActivity = feature.properties.latest_activity_at) {
-		if(datePassed(config.staleMargin, latestActivity) || latestActivity==0 || feature.properties.closed) {
-			return UIOptions.showStale;
-		}
-	}
-	return true;
-}
+	var deadline = feature.properties.deadline;
+	var latestActivity = feature.properties.latest_activity_at;
+	var	expired = datePassed(config.expiredMargin, deadline); 
+	var	stale = datePassed(config.staleMargin, latestActivity) || latestActivity == 0 || feature.properties.closed;
+
+	return 	(document.getElementById("futureDeadlineCbox").checked && deadline && !expired)
+			|| (document.getElementById("noDeadlineCbox").checked && !stale && !deadline)
+			|| (document.getElementById("expiredCBox").checked && deadline && expired && !stale)
+			|| (document.getElementById("staleCbox").checked && stale);
+		
+} // layerFilter()
 
 /* reset layer filters and handlers after a UI option change */
 function setFilters(overlays) {
@@ -490,64 +400,92 @@ function setFilters(overlays) {
 		overlays[i].eachLayer(function (layer) {
 			layer.on('mouseover', featureHighlight);
 			layer.on('mouseout', featureLowlight);
-			layer.bindLabel(layer.feature.labelContent);
+			layer.bindTooltip(layer.feature.labelContent, toolTipOptions);
 			layer.setStyle(layer.feature.issueStyle);
 		});
 	}
 }
 
-function setStale(event) {
-	UIOptions.showStale = event.target.checked;
+/* Mouse rollover event callbacks */
+function featureHighlight(event) {
+	event.target.setStyle({opacity:rolloverOpacity});
+}
+
+function featureLowlight(event) {
+	event.target.setStyle(event.target.feature.issueStyle);
+}
+
+// callback function for clicks on date filter checkboxes
+function UIHandleDateFilterCB(event) {
 	event.stopPropagation(event);
 	setFilters(theOverlays);
 }
 
-function setExpired(event) {
-	UIOptions.showExpired = event.target.checked;
-	event.stopPropagation(event);
-	setFilters(theOverlays);
-}
+function UISetup() {
+	titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
+	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	
+	// for displaying a list of issues with unexpired deadlines
+	deadlineListControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	deadlineListControl.getContainer().classList.add('deadline-list-container');
+	
+	layerControl = L.control.groupedLayers(null, null, 
+		{collapsed: false, position: 'topright', groupCheckboxes: false, 
+			title: config.firstMenu.name}).addTo(map);
+	
+	if(config.secondMenu && ! L.Browser.mobile) {
+		auxLayerControl = L.control.groupedLayers(null, null, 
+		{collapsed: true, position: 'topright', groupCheckboxes: true, title: config.secondMenu.name}).addTo(map);	
+	}
 
-function DeadlinesPopup() {
-	deadlineListControl.toggle();
+/*	Set up Title box (including a couple of UI elements) */
+	if(!L.Browser.mobile) {
+		titleBoxControl.show(
+			'<div>' + config.mapTitle + '<hr/>' +
+			'<span class="infoLink"><a target="_blank" class="external" href="'+ config.info + 
+				'">Info</a></span>&nbsp;&nbsp;' +
+			'<span class="deadline-list-switch"><input id="deadlinesListCbox" type="checkbox"/>' + 
+				'List upcoming deadlines</input></div>'
+		);
+		document.getElementById ("deadlinesListCbox").
+			addEventListener("click",function(){deadlineListControl.toggle()}, false);
+	}
+/*	Set up Legend box (including the date filter controls) */
+	legendBoxControl.show(
+		'<div id = "legend-content-desktop" class = "legend-content">' + 
+		'<div class="legend-heading">Filter by date</div>'+
+		'<img padding-top = 5 src = "images/Legend.png" align = "right">' + 
+		'<div><input id="futureDeadlineCbox" type="checkbox" />Future deadline</input></div>'  +
+		'<div><input id="noDeadlineCbox" type="checkbox" />No deadline</input></div>'  +
+		'<div><input id="expiredCBox" type="checkbox" />Past deadline</input></div>'  +
+		'<div><input id="staleCbox" type="checkbox" />Stale issue <br/>&nbsp;&nbsp;&nbsp;&nbsp;[&rarr; inactive >' + 
+			Math.round(config.staleMargin/30) +' months)]</input></div>' +
+		'</div>' 
+	);
+	// could simplify the following with jQuery
+	document.getElementById("futureDeadlineCbox").addEventListener("click", UIHandleDateFilterCB, false);	
+	document.getElementById("futureDeadlineCbox").checked=config.dateFilters.showFuture;
+	document.getElementById("noDeadlineCbox").addEventListener("click", UIHandleDateFilterCB, false);
+	document.getElementById("noDeadlineCbox").checked=config.dateFilters.showNoDeadline;
+	document.getElementById("expiredCBox").addEventListener("click", UIHandleDateFilterCB, false);	
+	document.getElementById("expiredCBox").checked=config.dateFilters.showExpired;
+	document.getElementById("staleCbox").addEventListener("click", UIHandleDateFilterCB, false);
+	document.getElementById("staleCbox").checked=config.dateFilters.showStale;
+// this doesn't seem to make any difference:
+//	L.DomEvent.disableClickPropagation(document.getElementById('legend-content-desktop'));
 }
 
 function main() {
 	getUrlConfig();	// Get URL parameters to override the Default configuration (in config.js) 
 	
 	initialiseMap();
-	
-	if(!L.Browser.mobile) {
-		titleBoxControl.show(config.mapTitle);
-		legendBoxControl.show(
-			'<div id = "legend-content-desktop" class = "legend-content">' + 
-			'<img padding-top = 5 src = "images/Legend.png" align = "left">' + 
-			'<div class="showExpired"><form><input id="showExpired" type="checkbox"/>Show</form></div>'  +
-			'<div class="showStale"><nobr> >' + Math.round(config.staleMargin/30) + 
-			' months<form><input id="showStale" type="checkbox"/>Show</form></nobr></div>' +
-			'<div class="infoLink"><a target="_blank" href="' + config.info + '">Further info</a></div>' +
-			'<div class="deadlineLink"><a href="#" onclick="DeadlinesPopup();return false;">Upcoming deadlines</a></div>' +
-			'</div>' 
-		);
-	} else {
-		legendBoxControl.show(
-			'<div class = "legend-content-mobile">' + 
-			'<div><form><input id="showExpired" type="checkbox"/>Show expired</form></div>'  +
-			'<div ><form><input id="showStale" type="checkbox"/>Show stale</form></div>' +
-			'<div ><a target="_blank" href="' + config.info + '">Further info</a></div></div>' 
-		);
-	}
-//	L.DomEvent.disableClickPropagation(document.getElementById('legend-content-desktop'));
-	
-	document.getElementById("showStale").addEventListener ("click", setStale, false);
-	document.getElementById("showStale").checked=true;
-	
-	document.getElementById("showExpired").addEventListener ("click", setExpired, false);
-	document.getElementById("showExpired").checked=true;
+		
+	UISetup();
 	
 	setUpOverlays(layerControl, config.firstMenu, {'coloursReversed': false});
 	if(auxLayerControl) setUpOverlays(auxLayerControl, config.secondMenu, {'coloursReversed': true});
-}
+
+} // main()
 
 </script>
 </body>
