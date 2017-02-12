@@ -13,12 +13,22 @@
 	width: auto;
 }
 
-.legend-content {
-	width: 210px;
-	min-height: 95px;
-	font: 9pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+.legend-heading {
+	font: 10pt/14pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: center;
+	font-weight: bold;
+	font-style: oblique;
 }
 
+.legend-content {
+	font: 9pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: left;
+	font-weight: normal;
+	width: 160px;
+//	min-height: 95px;
+}
+
+/*
 .legend-content-mobile {
 	text-align: left;
 	font: 7pt/10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
@@ -42,21 +52,17 @@
 	top: 20px;
 	right: 10px;
 }
+*/
 
 .infoLink {
-	font: 8pt "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-weight: bold;
-	position: absolute;
-	bottom: 5px;
-	left: 12px;
+	font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: left;
+	padding-right: 10em;
 }
 
-.deadlineLink {
-	font: 8pt "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-weight: bold;
-	position: absolute;
-	bottom: 5px;
-	right: 5px;
+.deadline-list-switch {
+	font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: right;
 }
 
 .leaflet-control-layers-group-name {
@@ -100,10 +106,8 @@
 
 #deadline-list {
 	padding-top: 10px;
-//	margin-left: 20px;
 	text-align: left;
 	overflow: auto;
-//	width: 300px;
 	max-height: 400px;
 	font: 10pt/12pt "Helvetica Neue", Arial, Helvetica, sans-serif; 
 }
@@ -133,4 +137,10 @@ body .custom-popup p{
 	background: rgba(235, 235, 235, 0.81);
 }
 
-
+.leaflet-bar button,
+.leaflet-bar button:hover {
+	min-width: 11.5em;
+	height: 15pt;
+	font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-weight: bold;
+}

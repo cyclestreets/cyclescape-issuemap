@@ -4,6 +4,11 @@ var colourTable = ["blue", "red", "green", "lime", "maroon", "navy", "olive", "o
 var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /* Utility functions */
+
+function ajaxFailure(event) {
+	alert('Failed to establish connection to Cyclescape server. Please try later.');
+}
+
 function customDateString(dateInSecs) {
 	var dateObject = new Date(parseInt(dateInSecs, 10) * 1000);
 	return (dateObject.getDate() + ' ' + monthNames[dateObject.getMonth()] + ' ' + dateObject.getFullYear());
@@ -20,9 +25,8 @@ function datePassed(intervalInDays, dateInSecs) { // true if timeInSecs
 	var today = new Date();
 	var dateObject = new Date(parseInt(dateInSecs, 10) * 1000);
 	var intervalInMillisecs = intervalInDays*24*60*60*1000;
-// console.log('today: ' + today.getTime() + ', otherday: ' + dateObject.getTime() );
-	if(today.getTime() > (dateObject.getTime() + intervalInMillisecs)) return true
-	else return false
+	if(today.getTime() > (dateObject.getTime() + intervalInMillisecs)) return true;
+	else return false;
 }
 
 function urlParam(name){

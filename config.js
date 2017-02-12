@@ -1,9 +1,79 @@
-/* Default configuration for Issue Map
- * settings for London Cycling Campaign
-
- * 5 Jan 2017
+/* Constants and default config record for Issue Map
+ * 11 Feb 2017
  */
 
+/* UI Constants */
+const deadlineWidth = 12;
+const noDeadlineWidth = 5;
+const rolloverWidth = 20;
+const lineOpacity = 0.5;
+const rolloverOpacity = 1;
+const dashArray = '1, 20';
+const thickDashArray = '15, 5';
+const thinDashArray = '10, 5';
+const areaFill = 0.15;
+const areaFillColor = 'gray';
+const circleMarkerRadius = 8;
+const thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className: "custom-popup"};
+toolTipOptions = {className: "tooltip"};
+
+/* URL for AJAX calls to the Cyclescape API */
+const cyclescapeApiUrl = "https://www.cyclescape.org/api/issues/?order=size";
+
+/*
+	George's Mapbox access token seems to be needed for access to the mapbox tile server only
+L.mapbox.accessToken = null; 	// the code seems to work without a token even though
+								// it uses a couple of mapbox-specific functions
+								// but the token is needed to use the api.tiles.mapbox.com server
+*/
+mapboxAccessToken = 'pk.eyJ1IjoibnV0dHl4YW5kZXIiLCJhIjoiOGJXbjNMWSJ9.ckqRbehjO-rU86vPSGzMpQ';
+
+/* base map layers */
+const mapboxAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+		'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+		'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+	osmAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+	cyclescapeAttribution = 'Issue data:<a href="http://blog.cyclescape.org/about/"> Cyclescape </a> | ',
+	cartoDbAttribution = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, Map tiles by CartoDB, under CC BY 3.0',
+	mapboxUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=' + mapboxAccessToken,
+	mapQuestUrl = 'http://otile1.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
+	cartoDbLightUrl = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+	OSMUrl = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+	cycleMapUrl = 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png',
+	mapnikBwUrl ='http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
+	// following URL found at http://korona.geog.uni-heidelberg.de/contact.html
+	// adminBoundariesUrl = 'http://129.206.66.245:8007/tms_b.ashx?x={x}&y={y}&z={z}'; 
+	adminBoundariesUrl = 'http://korona.geog.uni-heidelberg.de/tiles/adminb/x={x}&y={y}&z={z}'; 
+
+const streets = L.tileLayer(mapboxUrl, {id: 'mapbox.streets', 
+		attribution: L.Browser.mobile ? '' : cyclescapeAttribution + mapboxAttribution});
+const cartoDbLight = L.tileLayer(cartoDbLightUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + cartoDbAttribution});
+const mapQuest = L.tileLayer(mapQuestUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution});
+const openStreetMap = L.tileLayer(OSMUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity:0.7});
+const opencyclemap = L.tileLayer(cycleMapUrl, 
+		{attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity:0.7});
+const mapnik_BlackAndWhite = L.tileLayer(mapnikBwUrl, 
+		{maxZoom: 18, attribution: L.Browser.mobile ? '' : cyclescapeAttribution + osmAttribution, opacity: 0.8});
+const adminBoundaries = L.tileLayer(adminBoundariesUrl);
+
+const baseLayers = {
+	"OSM": openStreetMap,
+	"Greyscale" : mapnik_BlackAndWhite,
+	"MapBox": streets,
+	"OpenCycleMap": opencyclemap
+};
+
+const baseOverlays = {
+	"Borough Boundaries" : adminBoundaries
+};
+
+/* 
+	 Default settings for London Cycling Campaign (see http://lcc.org.uk/pages/consultation-map)
+*/
+// NB this is a var because it can be modified according to the URL parameters
 var config = {
 	"mapTitle": "LCC – related consultations on Cyclescape",
 	"mapCenter": [51.51, -0.12],
@@ -13,8 +83,12 @@ var config = {
 	"baseLayer": "MapBox",
 	"staleMargin": 365, // no. of days without posts
 	"expiredMargin": 30, // extra days beyond expiry date
-	"showExpired": false,
-	"showStale": false,
+	'dateFilters': {
+		"showFuture": true,
+		"showNoDeadline": true,
+		"showExpired": false,
+		"showStale": false
+	},
 	"firstMenu": {
 		"name": "Mayors Vision",
 		"specialTag": 
