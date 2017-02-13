@@ -130,8 +130,6 @@ function initialiseMap() {
 		doubleClickZoom: false, // so rapid clicks on tickboxes don't zoom the map!
 	});
 		
-	mapControl = L.control.layers(baseLayers, baseOverlays, {collapsed: true, position: 'bottomright'}).addTo(map);
-
 } // initialiseMap()
 
 /* Used when a feature is represented by a single point */
@@ -422,35 +420,41 @@ function UIHandleDateFilterCB(event) {
 }
 
 function UISetup() {
-	titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
-	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
-	
-	// for displaying a list of issues with unexpired deadlines
-	deadlineListControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
-	deadlineListControl.getContainer().classList.add('deadline-list-container');
-	
-	layerControl = L.control.groupedLayers(null, null, 
-		{collapsed: false, position: 'topright', groupCheckboxes: false, 
-			title: config.firstMenu.name}).addTo(map);
-	
-	if(config.secondMenu && ! L.Browser.mobile) {
-		auxLayerControl = L.control.groupedLayers(null, null, 
-		{collapsed: true, position: 'topright', groupCheckboxes: true, title: config.secondMenu.name}).addTo(map);	
-	}
 
-/*	Set up Title box (including a couple of UI elements) */
+/*	Set up Title box (including a couple of UI elements) (omitted for mobiles) */
 	if(!L.Browser.mobile) {
+		titleBoxControl = L.control.messagebox({position: 'topright', timeout: null}).addTo(map);
+		stopPropagation(titleBoxControl);
+		
 		titleBoxControl.show(
-			'<div>' + config.mapTitle + '<hr/>' +
+			'<div id="title-box-content">' + config.mapTitle + '<hr/>' +
 			'<span class="infoLink"><a target="_blank" class="external" href="'+ config.info + 
 				'">Info</a></span>&nbsp;&nbsp;' +
 			'<span class="deadline-list-switch"><input id="deadlinesListCbox" type="checkbox"/>' + 
 				'List upcoming deadlines</input></div>'
-		);
+		);	
 		document.getElementById ("deadlinesListCbox").
 			addEventListener("click",function(){deadlineListControl.toggle()}, false);
 	}
+
+	mapControl = L.control.layers(baseLayers, baseOverlays, {collapsed: true, position: 'bottomright'}).addTo(map);
+	stopPropagation(mapControl);
+
+	layerControl = L.control.groupedLayers(null, null, 
+		{collapsed: false, position: 'topright', groupCheckboxes: false, 
+			title: config.firstMenu.name}).addTo(map);
+	stopPropagation(layerControl);
+	
+	if(config.secondMenu && ! L.Browser.mobile) {
+		auxLayerControl = L.control.groupedLayers(null, null, 
+		{collapsed: true, position: 'topright', groupCheckboxes: true, title: config.secondMenu.name}).addTo(map);	
+		stopPropagation(auxLayerControl);
+	}
+
 /*	Set up Legend box (including the date filter controls) */
+	legendBoxControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	stopPropagation(legendBoxControl);
+	
 	legendBoxControl.show(
 		'<div id = "legend-content-desktop" class = "legend-content">' + 
 		'<div class="legend-heading">Filter by date</div>'+
@@ -462,6 +466,7 @@ function UISetup() {
 			Math.round(config.staleMargin/30) +' months)]</input></div>' +
 		'</div>' 
 	);
+	
 	// could simplify the following with jQuery
 	document.getElementById("futureDeadlineCbox").addEventListener("click", UIHandleDateFilterCB, false);	
 	document.getElementById("futureDeadlineCbox").checked=config.dateFilters.showFuture;
@@ -471,8 +476,18 @@ function UISetup() {
 	document.getElementById("expiredCBox").checked=config.dateFilters.showExpired;
 	document.getElementById("staleCbox").addEventListener("click", UIHandleDateFilterCB, false);
 	document.getElementById("staleCbox").checked=config.dateFilters.showStale;
-// this doesn't seem to make any difference:
-//	L.DomEvent.disableClickPropagation(document.getElementById('legend-content-desktop'));
+
+/* for displaying a list of issues with unexpired deadlines (initially hidden) */
+	deadlineListControl = L.control.messagebox({position: 'bottomleft', timeout: null}).addTo(map);
+	deadlineListControl.getContainer().classList.add('deadline-list-container');
+	stopPropagation(deadlineListControl);
+	
+	
+	/*Stop propagation of unwanted mouse events to the map when pointer is in a control */
+	function stopPropagation(control) {
+		L.DomEvent.on(control.getContainer(), 'mousewheel', L.DomEvent.stopPropagation);
+		L.DomEvent.disableClickPropagation(control.getContainer());
+	}
 }
 
 function main() {

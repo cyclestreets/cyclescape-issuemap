@@ -25,34 +25,9 @@
 	text-align: left;
 	font-weight: normal;
 	width: 160px;
-//	min-height: 95px;
+	user-select: none;  // prevent text selection 
+	min-height: 95px;
 }
-
-/*
-.legend-content-mobile {
-	text-align: left;
-	font: 7pt/10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
-}
-
-.showStale {
-	font: 9pt "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-weight: bold;
-	white-space: nowrap;
-	position: absolute;
-	float: right;
-	top: 56px;
-	right: 10px;
-}
-
-.showExpired {
-	font: 9pt "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-weight: bold;
-	position: absolute;
-	float: right;
-	top: 20px;
-	right: 10px;
-}
-*/
 
 .infoLink {
 	font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
@@ -77,7 +52,8 @@
 }
 
 .leaflet-control-layers-group {
-  margin-bottom: 0.7em;
+  	margin-bottom: 0.7em;
+	user-select: none;  // prevent text selection 
 }
 
 .leaflet-control-layers-expanded {
