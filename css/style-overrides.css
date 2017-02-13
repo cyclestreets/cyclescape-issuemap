@@ -29,10 +29,17 @@
 	min-height: 95px;
 }
 
+#title-box-content {
+	font: 12pt/14pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: center;
+	font-weight: bold;
+	user-select: none;  // prevent text selection 
+}
+
 .infoLink {
 	font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
 	text-align: left;
-	padding-right: 10em;
+	padding-right: 8em;
 }
 
 .deadline-list-switch {
