@@ -73,7 +73,7 @@ const baseOverlays = {
 /* 
 	 Default settings for London Cycling Campaign (see http://lcc.org.uk/pages/consultation-map)
 */
-// NB this is a var because it can be modified according to the URL parameters
+// NB this is a var because it will be modified according to the URL parameters
 var config = {
 	"mapTitle": "LCC – related consultations on Cyclescape",
 	"mapCenter": [51.51, -0.12],
@@ -201,7 +201,7 @@ var config = {
 		   {  
 			  "tags":"\"hackney\"",
 			  "menuItem":"Hackney",
-			  "onOff":"on"
+			  "onOff":"off"
 		   },
 		   {  
 			  "tags":"\"hammersmith-and-fulham\"",

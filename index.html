@@ -32,10 +32,14 @@
 <div id='map'></div>
 
 <script>
+
+/* NB miscellanous constants and the initial state of the config record are loaded from the config.js file */
+
 /* Globals */
 var map, titleBoxControl, legendBoxControl, layerControl, deadlineListControl,
 	auxLayerControl, mapControl, theOverlays = [];
-var ajaxCount = 0, initialOverlays = [];
+var ajaxCount = 0;
+var initialOverlays = [];
 var deadlines = [];
 
 // L.Browser.mobile = true;  // force mobile mode for testing only
@@ -131,6 +135,8 @@ function initialiseMap() {
 	});
 		
 } // initialiseMap()
+
+/* Code used to configure the overlays once the API has delivered them as GeoJSON layers */
 
 /* Used when a feature is represented by a single point */
 function circleMarker(feature, latlng) {
@@ -266,7 +272,6 @@ function setUpOverlays(layerControl, menuSpec, options) {
 						style: {color: color},
 						pointToLayer: circleMarker
 					};
-//		if(spec.menuItem == '<span class="leaflet-control-layer-menu-item">OTHER</>') {
 		if(spec.menuItem == 'OTHER') { 
 			otherFlag = true;
 			break;
@@ -324,8 +329,8 @@ function allLayersReady() {
 	
 	setFilters(theOverlays); // for all the layers we have processed
 
-	// for(i in initialOverlays) map.addLayer(initialOverlays[i]);
-	for(i in theOverlays) map.addLayer(theOverlays[i]);
+//	for(i in theOverlays) map.addLayer(theOverlays[i]);
+	for(i in initialOverlays) map.addLayer(initialOverlays[i]);
 	
 	setupDeadlineList();
 
@@ -404,6 +409,7 @@ function setFilters(overlays) {
 	}
 }
 
+/* UI code */
 /* Mouse rollover event callbacks */
 function featureHighlight(event) {
 	event.target.setStyle({opacity:rolloverOpacity});
@@ -489,6 +495,9 @@ function UISetup() {
 		L.DomEvent.disableClickPropagation(control.getContainer());
 	}
 }
+
+/* end of UI code */
+
 
 function main() {
 	getUrlConfig();	// Get URL parameters to override the Default configuration (in config.js) 
