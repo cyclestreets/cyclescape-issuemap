@@ -18,7 +18,7 @@ const thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className
 toolTipOptions = {className: "tooltip"};
 
 /* URL for AJAX calls to the Cyclescape API */
-const cyclescapeApiUrl = "https://www.cyclescape.org/api/issues/?order=size";
+const cyclescapeApiUrl = "https://www.cyclescape.org/api/issues/";
 
 /*
 	George's Mapbox access token seems to be needed for access to the mapbox tile server only
