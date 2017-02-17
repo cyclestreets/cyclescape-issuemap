@@ -18,7 +18,7 @@ const thePopupOptions = {maxHeight: 300, maxWidth: 400, autoPan: true, className
 toolTipOptions = {className: "tooltip"};
 
 /* URL for AJAX calls to the Cyclescape API */
-const cyclescapeApiUrl = "https://www.cyclescape.org/api/issues/?order=size";
+const cyclescapeApiUrl = "https://www.cyclescape.org/api/issues/";
 
 /*
 	George's Mapbox access token seems to be needed for access to the mapbox tile server only
@@ -41,9 +41,13 @@ const mapboxAttribution = 'Map data &copy; <a href="http://openstreetmap.org">Op
 	OSMUrl = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 	cycleMapUrl = 'http://{s}.tile.opencyclemap.org/cycle/{z}/{x}/{y}.png',
 	mapnikBwUrl ='http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
-	// following URL found at http://korona.geog.uni-heidelberg.de/contact.html
-	// adminBoundariesUrl = 'http://129.206.66.245:8007/tms_b.ashx?x={x}&y={y}&z={z}'; 
-	adminBoundariesUrl = 'http://korona.geog.uni-heidelberg.de/tiles/adminb/x={x}&y={y}&z={z}'; 
+/*	following URL found at http://korona.geog.uni-heidelberg.de/contact.html
+	'http://129.206.66.245:8007/tms_b.ashx?x={x}&y={y}&z={z}'; 
+	or
+	'http://korona.geog.uni-heidelberg.de/tiles/adminb/x={x}&y={y}&z={z}'; 
+	Now superseded by the following cyclestreets URL which transpates and forwards the request:
+*/
+	adminBoundariesUrl =  'https://{s}.tile.cyclestreets.net/korona/{z}/{x}/{y}.png';
 
 const streets = L.tileLayer(mapboxUrl, {id: 'mapbox.streets', 
 		attribution: L.Browser.mobile ? '' : cyclescapeAttribution + mapboxAttribution});

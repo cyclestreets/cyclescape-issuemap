@@ -286,6 +286,7 @@ function setUpOverlays(layerControl, menuSpec, options) {
 				url += tags ? '&tags=[' + tags +']' : '';			
 			if(excludedTags) url += '&excluding_tags=[' + excludedTags + ']';
 			overlay = L.mapbox.featureLayer(null, options).loadURL(url);
+//console.log(url);
 			ajaxCount += 1;
 			layerControl.addOverlay(overlay, aName, sectionName);
 			if(initiallyOn) initialOverlays.push(overlay);
@@ -329,7 +330,6 @@ function allLayersReady() {
 	
 	setFilters(theOverlays); // for all the layers we have processed
 
-//	for(i in theOverlays) map.addLayer(theOverlays[i]);
 	for(i in initialOverlays) map.addLayer(initialOverlays[i]);
 	
 	setupDeadlineList();
