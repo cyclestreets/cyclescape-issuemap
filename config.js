@@ -153,7 +153,7 @@ var config = {
 			  "onOff":"on"
 		   },
 		   {  
-			  "tags":"\"Barnet\"",
+			  "tags":"\"barnet\"",
 			  "menuItem":"Barnet",
 			  "onOff":"on"
 		   },
