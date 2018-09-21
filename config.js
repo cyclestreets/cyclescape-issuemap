@@ -120,6 +120,11 @@ var config = {
 			  "onOff":"on"
 		   },
 		   {  
+			  "tags":"\"liveable-neighbourhood\"",
+			  "menuItem":"Liveable N's",
+			  "onOff":"on"
+		   },
+		   {  
 			  "tags":"\"quietway\"",
 			  "menuItem":"Quietways",
 			  "onOff":"on"

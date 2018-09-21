@@ -63,8 +63,9 @@
 	user-select: none;  // prevent text selection 
 }
 
+/* Determines size of the menu box */
 .leaflet-control-layers-expanded {
-  max-height: 25em;
+  max-height: 28em;
   min-width: 13em;
   overflow: auto;
   width: auto;
