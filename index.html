@@ -66,8 +66,8 @@ function getUrlConfig() {
 	if(info = urlParam('info')) config.info = info;
 	if(staleMargin = urlParam('stalemargin')) config.staleMargin = staleMargin;
 	if(expiredMargin = urlParam('expiredmargin')) config.expiredMargin = expiredMargin;
-	if(showExpired = urlParam('showexpired')) config.showExpired = (showExpired == "true") ? true : false;
-	if(showStale = urlParam('showstale')) config.showStale = (showStale == "true") ? true : false;
+	if(showExpired = urlParam('showexpired')) config.dateFilters.showExpired = (showExpired == "true") ? true : false;
+	if(showStale = urlParam('showstale')) config.dateFilters.showStale = (showStale == "true") ? true : false;
 	
 	function getSpecialTag (specialTag) {
 		var tag, name, otherName;
